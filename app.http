@@ -1,0 +1,11 @@
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "emailOrUsername": "colkimib@gmail.com",
+  "password": "EthicalIdiot12@Hacker2405"
+}
+
+###
+GET http://localhost:3000/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwOWY3ZjNhMi04YTE4LTQ2MmItYTFlNi03YjNjNjg2OTA5ZTgiLCJ1c2VybmFtZSI6ImNvbGtpbWkiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3ODk1OTczMzIsImV4cCI6MTc5MDIwMjEzMn0.-WVRQgubfXIDbqCcA1Hgn5GjwFrPhd-r6wTt52mqDgE

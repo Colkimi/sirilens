@@ -1,6 +1,6 @@
-import { Controller, Post, Body, Get, Query } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, UseGuards } from '@nestjs/common';
 import { ChatbotService } from './chatbot.service';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { ChatRequestDto, ChatResponseDto } from './dto/chat-request.dto';
 import { randomUUID } from 'crypto';
 import { BreachCheckService } from '../external-apis/breach-check.service';
@@ -8,8 +8,14 @@ import { EmailValidationService } from '../external-apis/email-validation.servic
 import { WebsiteAnalysisService } from '../external-apis/website-analysis.service';
 import { MaliciousSiteDetectionService } from '../external-apis/malicious-site-detection.service';
 import { ThreatIntelligenceService } from '../analytics/threat-intelligence.service';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { UserRole } from 'src/users/entities/user.entity';
 
 @ApiTags('Security Analysis')
+@ApiBearerAuth('JWT-auth')
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('chat')
 export class ChatbotController {
   constructor(
@@ -21,6 +27,7 @@ export class ChatbotController {
     private readonly threatIntelligenceService: ThreatIntelligenceService,
   ) {}
 
+  @Roles(UserRole.ADMIN, UserRole.USER, UserRole.MODERATOR)
   @Post()
   @ApiOperation({
     summary: 'Chat with sirilens Security Assistant',
@@ -128,6 +135,7 @@ Session Management:
     return { response, sessionId };
   }
 
+  @Roles(UserRole.ADMIN, UserRole.USER, UserRole.MODERATOR)
   @Get('help')
   @ApiOperation({
     summary: 'Get help on available commands',
@@ -143,6 +151,7 @@ Session Management:
     return { response, sessionId: '' };
   }
 
+  @Roles(UserRole.ADMIN, UserRole.USER, UserRole.MODERATOR)
   @Post('analyze-website')
   @ApiOperation({
     summary: 'Analyze website security',
@@ -191,6 +200,7 @@ Session Management:
     return this.websiteAnalysisService.analyzeWebsite(body.url);
   }
 
+  @Roles(UserRole.ADMIN, UserRole.USER, UserRole.MODERATOR)
   @Post('check-breach')
   @ApiOperation({
     summary: 'Check if email/username appears in known data breaches',
@@ -258,6 +268,7 @@ Session Management:
     };
   }
 
+  @Roles(UserRole.ADMIN, UserRole.USER, UserRole.MODERATOR)
   @Post('validate-email')
   @ApiOperation({
     summary: 'Validate email sender address',
@@ -310,6 +321,7 @@ Session Management:
     };
   }
 
+  @Roles(UserRole.ADMIN, UserRole.USER, UserRole.MODERATOR)
   @Get('threat-intelligence')
   @ApiOperation({
     summary: 'Get threat intelligence feed',
@@ -365,6 +377,7 @@ Session Management:
     return this.threatIntelligenceService.getThreatIntelligenceFeed();
   }
 
+  @Roles(UserRole.ADMIN, UserRole.USER, UserRole.MODERATOR)
   @Post('check-email-links')
   @ApiOperation({
     summary: 'Check email content for malicious links',

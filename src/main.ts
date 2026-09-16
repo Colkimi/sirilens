@@ -1,7 +1,13 @@
 import * as dotenv from 'dotenv';
-import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { AllExceptionsFilter } from './http-exception.filter';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
+import helmet from 'helmet';
+import 'reflect-metadata';
+import { IoAdapter } from '@nestjs/platform-socket.io';
+import { ValidationPipe } from '@nestjs/common';
+
 
 // Load environment variables at the very start
 dotenv.config();
@@ -9,7 +15,26 @@ dotenv.config();
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Enable CORS for frontend communication
+  app.useWebSocketAdapter(new IoAdapter() as any);
+
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // Disables CSP restrictions that break Swagger UI JS/CSS
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
+  app.useGlobalPipes(new ValidationPipe({
+    transform: true,
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transformOptions: {
+      enableImplicitConversion: true,
+    },
+  }));
+
+  const { httpAdapter } = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new AllExceptionsFilter(httpAdapter));
+
   const allowedOrigins = [
     'http://localhost:5173',
     'https://vuln-ai.geniushackers.guru',
@@ -41,6 +66,19 @@ async function bootstrap() {
       'support@sirilens.dev',
     )
     .setLicense('UNLICENSED', 'https://github.com/colki/sirilens')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth',
+    )
+    .addTag('auth', 'Authentication - User registration and login')
+    .addTag('users', 'User management - Admin and profile operations')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
